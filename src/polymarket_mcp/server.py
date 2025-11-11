@@ -45,28 +45,32 @@ async def list_tools() -> list[types.Tool]:
     List available tools.
 
     Returns:
-        List of tools:
-        - 12 Trading tools (order creation, management, smart trading)
-        - 8 Market Discovery tools (search, filter, trending, etc.)
-        - 10 Market Analysis tools (price, volume, liquidity, analysis, etc.)
-        - 8 Portfolio Management tools (positions, P&L, risk analysis)
-        - 7 Real-time WebSocket tools (price monitoring, orderbook, trades)
+        List of tools (conditional on authentication):
+        - 8 Market Discovery tools (always available - public API)
+        - 10 Market Analysis tools (always available - public API)
+        - 12 Trading tools (requires API credentials)
+        - 8 Portfolio Management tools (requires API credentials)
+        - 7 Real-time WebSocket tools (partial - some require auth)
     """
     tools = []
 
-    # Add trading tools
-    tools.extend(get_tool_definitions())
-
-    # Add market discovery tools
+    # Always available - public APIs (no auth needed)
     tools.extend(market_discovery.get_tools())
-
-    # Add market analysis tools
     tools.extend(market_analysis.get_tools())
 
-    # Add portfolio management tools
-    tools.extend(portfolio_integration.get_portfolio_tool_definitions())
+    # Only available with API credentials
+    has_credentials = polymarket_client and polymarket_client.has_api_credentials()
 
-    # Add real-time websocket tools
+    if has_credentials:
+        # Trading tools (require L2 auth)
+        tools.extend(get_tool_definitions())
+        # Portfolio management tools (require auth)
+        tools.extend(portfolio_integration.get_portfolio_tool_definitions())
+        logger.info("Trading and Portfolio tools enabled (authenticated)")
+    else:
+        logger.info("Trading and Portfolio tools disabled (no API credentials - read-only mode)")
+
+    # Real-time tools (partial functionality without auth)
     tools.extend(realtime.get_tools())
 
     return tools
@@ -305,18 +309,25 @@ async def initialize_server() -> None:
             passphrase=config.POLYMARKET_PASSPHRASE,
         )
 
-        # Create API credentials if not provided
+        # Create API credentials if not provided (optional - allows read-only mode)
         if not polymarket_client.has_api_credentials():
-            logger.info("No API credentials found. Creating new credentials...")
-            await polymarket_client.create_api_credentials()
-            logger.info(
-                "API credentials created successfully. "
-                "Save these to your .env file for future use:"
-            )
-            logger.info(f"POLYMARKET_API_KEY={polymarket_client.api_creds.api_key}")
-            logger.info(
-                f"POLYMARKET_PASSPHRASE={polymarket_client.api_creds.api_passphrase}"
-            )
+            logger.info("No API credentials found. Attempting to create...")
+            try:
+                await polymarket_client.create_api_credentials()
+                logger.info(
+                    "API credentials created successfully! "
+                    "Save these to your .env file for future use:"
+                )
+                logger.info(f"POLYMARKET_API_KEY={polymarket_client.api_creds.api_key}")
+                logger.info(
+                    f"POLYMARKET_PASSPHRASE={polymarket_client.api_creds.api_passphrase}"
+                )
+            except Exception as e:
+                logger.warning(f"Could not create API credentials: {e}")
+                logger.info("Continuing in READ-ONLY mode")
+                logger.info("Available: Market Discovery (8 tools) + Market Analysis (10 tools)")
+                logger.info("Unavailable: Trading (12 tools) + Portfolio (8 tools)")
+                logger.info("To enable trading, fund your wallet or configure existing API credentials")
 
         # Initialize safety limits
         logger.info("Initializing safety limits...")
@@ -326,14 +337,17 @@ async def initialize_server() -> None:
         rate_limiter = get_rate_limiter()
         logger.info("Rate limiter initialized")
 
-        # Initialize trading tools
-        logger.info("Initializing trading tools...")
-        trading_tools = TradingTools(
-            client=polymarket_client,
-            safety_limits=safety_limits,
-            config=config
-        )
-        logger.info("Trading tools initialized with 12 tools")
+        # Initialize trading tools (only if authenticated)
+        if polymarket_client.has_api_credentials():
+            logger.info("Initializing trading tools...")
+            trading_tools = TradingTools(
+                client=polymarket_client,
+                safety_limits=safety_limits,
+                config=config
+            )
+            logger.info("Trading tools initialized with 12 tools")
+        else:
+            logger.info("Trading tools NOT initialized (no API credentials - read-only mode)")
 
         # Initialize WebSocket manager
         logger.info("Initializing WebSocket manager...")
@@ -343,8 +357,16 @@ async def initialize_server() -> None:
         logger.info("WebSocket manager initialized with 7 real-time tools")
 
         logger.info("Server initialization complete!")
-        logger.info(f"Ready to trade on chain ID {config.POLYMARKET_CHAIN_ID}")
-        logger.info("Available tools: 45 total (12 Trading, 18 Market, 8 Portfolio, 7 Real-time)")
+        logger.info(f"Connected to Polymarket on chain ID {config.POLYMARKET_CHAIN_ID}")
+
+        # Report available tools based on authentication
+        if polymarket_client.has_api_credentials():
+            logger.info("Mode: FULL (authenticated)")
+            logger.info("Available tools: 45 total (8 Discovery, 10 Analysis, 12 Trading, 8 Portfolio, 7 Real-time)")
+        else:
+            logger.info("Mode: READ-ONLY (no API credentials)")
+            logger.info("Available tools: 25 total (8 Discovery, 10 Analysis, 7 Real-time)")
+            logger.info("Trading and Portfolio tools require API credentials")
 
     except Exception as e:
         logger.error(f"Failed to initialize server: {e}")
