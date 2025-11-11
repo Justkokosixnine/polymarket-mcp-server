@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  polymarket-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: polymarket-mcp
+    image: polymarket-mcp:latest
+
+    # Environment variables (loaded from .env file)
+    environment:
+      # Required for trading (read from .env)
+      - POLYGON_PRIVATE_KEY=${POLYGON_PRIVATE_KEY}
+      - POLYGON_ADDRESS=${POLYGON_ADDRESS}
+
+      # Optional API credentials (if you have them)
+      - POLYMARKET_API_KEY=${POLYMARKET_API_KEY:-}
+      - POLYMARKET_PASSPHRASE=${POLYMARKET_PASSPHRASE:-}
+
+      # Operating mode
+      - DEMO_MODE=${DEMO_MODE:-false}
+
+      # Configuration
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - POLYMARKET_CHAIN_ID=${POLYMARKET_CHAIN_ID:-137}
+
+      # Safety limits (optional overrides)
+      - MAX_ORDER_SIZE_USD=${MAX_ORDER_SIZE_USD:-1000}
+      - MAX_TOTAL_EXPOSURE_USD=${MAX_TOTAL_EXPOSURE_USD:-10000}
+      - REQUIRE_CONFIRMATION_ABOVE_USD=${REQUIRE_CONFIRMATION_ABOVE_USD:-100}
+
+    # Volume for persistent logs
+    volumes:
+      - ./logs:/app/logs
+      - polymarket-data:/app/data
+
+    # Restart policy for reliability
+    restart: unless-stopped
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Resource limits (optional - adjust based on needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Network mode (use default bridge)
+    network_mode: bridge
+
+volumes:
+  polymarket-data:
+    driver: local
+
+# Optional: Add Redis for caching (uncomment if needed)
+# services:
+#   redis:
+#     image: redis:7-alpine
+#     container_name: polymarket-redis
+#     restart: unless-stopped
+#     volumes:
+#       - redis-data:/data
+#     healthcheck:
+#       test: ["CMD", "redis-cli", "ping"]
+#       interval: 10s
+#       timeout: 3s
+#       retries: 3
+#
+# volumes:
+#   redis-data:
+#     driver: local

@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: polymarket-mcp
+  namespace: default
+  labels:
+    app: polymarket-mcp
+    version: v0.1.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: polymarket-mcp
+  template:
+    metadata:
+      labels:
+        app: polymarket-mcp
+        version: v0.1.0
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+
+      containers:
+      - name: polymarket-mcp
+        image: polymarket-mcp:latest
+        imagePullPolicy: IfNotPresent
+
+        # Environment from ConfigMap and Secrets
+        envFrom:
+        - configMapRef:
+            name: polymarket-mcp-config
+        - secretRef:
+            name: polymarket-mcp-secrets
+
+        # Resource limits
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+
+        # Volume mounts
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+        - name: data
+          mountPath: /app/data
+
+        # Liveness probe
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        # Readiness probe
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+
+      # Volumes
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: polymarket-mcp-logs
+      - name: data
+        persistentVolumeClaim:
+          claimName: polymarket-mcp-data
+
+      # Restart policy
+      restartPolicy: Always
+
+      # Node selector (optional)
+      # nodeSelector:
+      #   kubernetes.io/arch: amd64
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: polymarket-mcp-logs
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: polymarket-mcp-data
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+  storageClassName: standard

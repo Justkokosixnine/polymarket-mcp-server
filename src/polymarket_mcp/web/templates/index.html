@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymarket MCP Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>Polymarket MCP</h1>
+                <span class="status-badge" id="mcp-status">
+                    {% if mcp_status.connected %}
+                    <span class="status-dot status-online"></span> Connected
+                    {% else %}
+                    <span class="status-dot status-offline"></span> Disconnected
+                    {% endif %}
+                </span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/" class="active">Dashboard</a></li>
+                <li><a href="/config">Configuration</a></li>
+                <li><a href="/markets">Markets</a></li>
+                <li><a href="/monitoring">Monitoring</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container main-content">
+        <!-- Status Overview -->
+        <section class="card-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3>MCP Status</h3>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item">
+                        <span class="stat-label">Mode</span>
+                        <span class="stat-value">{{ mcp_status.mode }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Address</span>
+                        <span class="stat-value mono">{{ mcp_status.address[:10] }}...{{ mcp_status.address[-8:] if mcp_status.address != "Not configured" else "" }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Chain ID</span>
+                        <span class="stat-value">{{ mcp_status.chain_id }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Tools Available</span>
+                        <span class="stat-value">{{ mcp_status.tools_available }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Dashboard Statistics</h3>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Requests</span>
+                        <span class="stat-value">{{ stats.requests_total }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Markets Viewed</span>
+                        <span class="stat-value">{{ stats.markets_viewed }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">API Calls</span>
+                        <span class="stat-value">{{ stats.api_calls }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Uptime</span>
+                        <span class="stat-value">{{ uptime }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="section">
+            <h2>Quick Actions</h2>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="testConnection()">
+                    Test Connection
+                </button>
+                <button class="btn btn-secondary" onclick="window.location.href='/markets'">
+                    Browse Markets
+                </button>
+                <button class="btn btn-secondary" onclick="window.location.href='/config'">
+                    Configure Settings
+                </button>
+                <button class="btn btn-secondary" onclick="refreshStatus()">
+                    Refresh Status
+                </button>
+            </div>
+        </section>
+
+        <!-- Recent Activity -->
+        <section class="section">
+            <h2>Trending Markets</h2>
+            <div class="card">
+                <div class="card-body">
+                    <div id="trending-markets" class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading trending markets...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- System Info -->
+        <section class="section">
+            <h2>System Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>MCP Server Version:</strong> 0.1.0
+                </div>
+                <div class="info-item">
+                    <strong>Dashboard Version:</strong> 0.1.0
+                </div>
+                <div class="info-item">
+                    <strong>WebSocket:</strong> <span id="ws-status">Connecting...</span>
+                </div>
+                <div class="info-item">
+                    <strong>Last Updated:</strong> <span id="last-updated">Just now</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Polymarket MCP Dashboard | Made with FastAPI & Real-time Data</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTrendingMarkets();
+            initWebSocket();
+        });
+
+        async function testConnection() {
+            showNotification('Testing connection...', 'info');
+            try {
+                const response = await fetch('/api/test-connection');
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Connection successful!', 'success');
+                } else {
+                    showNotification('Connection failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Connection test failed: ' + error.message, 'error');
+            }
+        }
+
+        async function loadTrendingMarkets() {
+            const container = document.getElementById('trending-markets');
+            try {
+                const response = await fetch('/api/markets/trending?limit=5');
+                const data = await response.json();
+
+                if (data.markets && data.markets.length > 0) {
+                    container.innerHTML = `
+                        <div class="market-list">
+                            ${data.markets.map(market => `
+                                <div class="market-item">
+                                    <div class="market-title">${market.question || 'Unknown Market'}</div>
+                                    <div class="market-meta">
+                                        <span>Volume: $${formatNumber(market.volume_24h || 0)}</span>
+                                        <span>Liquidity: $${formatNumber(market.liquidity || 0)}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '<p class="text-muted">No trending markets available</p>';
+                }
+            } catch (error) {
+                container.innerHTML = `<p class="text-error">Failed to load markets: ${error.message}</p>`;
+            }
+        }
+
+        async function refreshStatus() {
+            showNotification('Refreshing status...', 'info');
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+
+                if (data.connected) {
+                    showNotification('Status updated successfully', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification('MCP not connected', 'warning');
+                }
+            } catch (error) {
+                showNotification('Failed to refresh status: ' + error.message, 'error');
+            }
+        }
+
+        function initWebSocket() {
+            const ws = new WebSocket(`ws://${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                document.getElementById('ws-status').textContent = 'Connected';
+                document.getElementById('ws-status').className = 'text-success';
+            };
+
+            ws.onclose = () => {
+                document.getElementById('ws-status').textContent = 'Disconnected';
+                document.getElementById('ws-status').className = 'text-error';
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                if (message.type === 'stats_update') {
+                    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+    </script>
+</body>
+</html>

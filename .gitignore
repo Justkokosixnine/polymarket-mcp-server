@@ -68,3 +68,19 @@ claude_desktop_config.json
 # Local configuration (keep .env.example)
 .env.production
 .env.development
+# Testing artifacts
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.benchmarks/
+benchmark*.json
+
+# Pre-commit
+.pre-commit-config.yaml.backup
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

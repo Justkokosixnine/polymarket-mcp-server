@@ -21,13 +21,19 @@ class PolymarketConfig(BaseSettings):
         extra="ignore"
     )
 
-    # Required Polygon Wallet Configuration
+    # DEMO MODE - Run without real credentials (read-only)
+    DEMO_MODE: bool = Field(
+        default=False,
+        description="Run in demo mode without real wallet (read-only, no trading)"
+    )
+
+    # Required Polygon Wallet Configuration (optional in DEMO_MODE)
     POLYGON_PRIVATE_KEY: str = Field(
-        ...,
+        default="",
         description="Polygon wallet private key (without 0x prefix)"
     )
     POLYGON_ADDRESS: str = Field(
-        ...,
+        default="",
         description="Polygon wallet address"
     )
     POLYMARKET_CHAIN_ID: int = Field(
@@ -117,10 +123,20 @@ class PolymarketConfig(BaseSettings):
 
     @field_validator("POLYGON_PRIVATE_KEY")
     @classmethod
-    def validate_private_key(cls, v: str) -> str:
-        """Validate private key format"""
+    def validate_private_key(cls, v: str, info) -> str:
+        """Validate private key format (skipped in DEMO_MODE)"""
+        # Get DEMO_MODE from the data being validated
+        demo_mode = info.data.get('DEMO_MODE', False)
+
+        # In DEMO mode, use a fixed demo private key
+        if demo_mode:
+            return "0000000000000000000000000000000000000000000000000000000000000001"
+
+        # Normal validation for non-demo mode
         if not v:
-            raise ValueError("POLYGON_PRIVATE_KEY is required")
+            raise ValueError(
+                "POLYGON_PRIVATE_KEY is required (or set DEMO_MODE=true for read-only access)"
+            )
         # Remove 0x prefix if present
         if v.startswith("0x"):
             v = v[2:]
@@ -135,10 +151,20 @@ class PolymarketConfig(BaseSettings):
 
     @field_validator("POLYGON_ADDRESS")
     @classmethod
-    def validate_address(cls, v: str) -> str:
-        """Validate Polygon address format"""
+    def validate_address(cls, v: str, info) -> str:
+        """Validate Polygon address format (skipped in DEMO_MODE)"""
+        # Get DEMO_MODE from the data being validated
+        demo_mode = info.data.get('DEMO_MODE', False)
+
+        # In DEMO mode, use a fixed demo address
+        if demo_mode:
+            return "0x0000000000000000000000000000000000000001"
+
+        # Normal validation for non-demo mode
         if not v:
-            raise ValueError("POLYGON_ADDRESS is required")
+            raise ValueError(
+                "POLYGON_ADDRESS is required (or set DEMO_MODE=true for read-only access)"
+            )
         if not v.startswith("0x"):
             raise ValueError("POLYGON_ADDRESS must start with 0x")
         if len(v) != 42:

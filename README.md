@@ -112,9 +112,93 @@ Powered by **[Claude Code](https://claude.ai/code)** from Anthropic
 
 ---
 
+## 🌐 Web Dashboard
+
+**NEW**: Manage and monitor your Polymarket MCP Server with a modern web interface!
+
+```bash
+# Start the web dashboard
+polymarket-web
+
+# Or use the quick start script
+./start_web_dashboard.sh
+```
+
+Access at: **http://localhost:8080**
+
+### Dashboard Features
+
+- **Real-time Monitoring**: Live MCP status, WebSocket connection, and statistics
+- **Configuration Management**: Visual sliders for safety limits and trading controls
+- **Market Discovery**: Search, filter, and browse markets with live updates
+- **Market Analysis**: AI-powered analysis with recommendations and risk assessment
+- **System Monitoring**: Performance charts, rate limits, and activity logs
+- **Dark Theme**: Professional UI optimized for extended use
+
+See [WEB_DASHBOARD.md](WEB_DASHBOARD.md) for complete documentation.
+
+---
+
 ## 🚀 Quick Start
 
-### Installation
+### One-Command Installation (Recommended)
+
+**Try DEMO mode first** (no wallet needed):
+```bash
+# macOS/Linux
+curl -sSL https://raw.githubusercontent.com/caiovicentino/polymarket-mcp-server/main/quickstart.sh | bash
+
+# Or clone and run locally
+git clone https://github.com/caiovicentino/polymarket-mcp-server.git
+cd polymarket-mcp-server
+./quickstart.sh
+```
+
+**Full installation** (with trading):
+```bash
+# macOS/Linux
+./install.sh
+
+# Windows
+install.bat
+```
+
+The automated installer will:
+- ✓ Check Python version (3.10+)
+- ✓ Create virtual environment
+- ✓ Install all dependencies
+- ✓ Configure environment
+- ✓ Set up Claude Desktop integration
+- ✓ Test the installation
+
+### Installation Options
+
+| Method | Command | Best For |
+|--------|---------|----------|
+| **Quick Start** | `./quickstart.sh` | First-time users, testing |
+| **DEMO Mode** | `./install.sh --demo` | No wallet, read-only access |
+| **Full Install** | `./install.sh` | Production trading setup |
+| **Windows** | `install.bat` | Windows users |
+
+### DEMO Mode vs Full Mode
+
+**DEMO Mode** (No wallet required):
+- ✅ Market discovery and search
+- ✅ Real-time market analysis
+- ✅ AI-powered insights
+- ✅ Price monitoring
+- ❌ Trading disabled (read-only)
+
+**Full Mode** (Requires Polygon wallet):
+- ✅ Everything in DEMO mode
+- ✅ Place orders and execute trades
+- ✅ Portfolio management
+- ✅ Position tracking
+- ✅ Real-time trade notifications
+
+### Manual Installation
+
+If you prefer manual setup:
 
 ```bash
 # Clone the repository
@@ -131,21 +215,27 @@ pip install -e .
 
 ### Configuration
 
+**Option 1: DEMO Mode** (easiest)
 ```bash
-# Copy the environment template
 cp .env.example .env
+# Edit .env and set:
+DEMO_MODE=true
+```
 
+**Option 2: Full Trading Mode**
+```bash
+cp .env.example .env
 # Edit with your Polygon wallet credentials
 nano .env
 ```
 
-**Required credentials:**
+**Required credentials (Full Mode):**
 ```env
 POLYGON_PRIVATE_KEY=your_private_key_without_0x_prefix
 POLYGON_ADDRESS=0xYourPolygonAddress
 ```
 
-**Optional (recommended) - Safety Limits:**
+**Recommended Safety Limits:**
 ```env
 MAX_ORDER_SIZE_USD=1000
 MAX_TOTAL_EXPOSURE_USD=5000
@@ -186,8 +276,10 @@ Add to your Claude Desktop configuration file:
 ## 📖 Documentation
 
 ### Getting Started
-- **[Setup Guide](SETUP_GUIDE.md)** - Detailed installation and configuration instructions
-- **[Quick Start Video](#)** - Video walkthrough (coming soon)
+- **[Visual Installation Guide](VISUAL_INSTALL_GUIDE.md)** - Step-by-step with diagrams and screenshots
+- **[FAQ](FAQ.md)** - Frequently asked questions and troubleshooting
+- **[Setup Guide](SETUP_GUIDE.md)** - Detailed configuration instructions
+- **[Demo Video Script](DEMO_VIDEO_SCRIPT.md)** - Video tutorial scripts
 
 ### Developer Resources
 - **[Tools Reference](TOOLS_REFERENCE.md)** - Complete API documentation for all 45 tools
@@ -199,6 +291,50 @@ Add to your Claude Desktop configuration file:
 - **[Usage Examples](USAGE_EXAMPLES.py)** - Code examples for all tools
 - **[Test Examples](TEST_EXAMPLES.py)** - Example test implementations
 - **[Market Analysis Scripts](analyze_top_markets.py)** - Advanced analysis examples
+
+### System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    POLYMARKET MCP SERVER                    │
+└─────────────────────────────────────────────────────────────┘
+
+    ┌──────────────┐
+    │   Claude     │
+    │   Desktop    │ (Natural language interface)
+    └──────┬───────┘
+           │ MCP Protocol
+           ▼
+    ┌──────────────────────────────────────────────┐
+    │           MCP Server (Python)                │
+    ├──────────────────────────────────────────────┤
+    │  ┌────────────┐  ┌──────────────────────┐   │
+    │  │  Market    │  │  Trading             │   │
+    │  │  Discovery │  │  Engine              │   │
+    │  │  (8 tools) │  │  (12 tools)          │   │
+    │  └────────────┘  └──────────────────────┘   │
+    │                                              │
+    │  ┌────────────┐  ┌──────────────────────┐   │
+    │  │  Market    │  │  Portfolio           │   │
+    │  │  Analysis  │  │  Manager             │   │
+    │  │  (10 tools)│  │  (8 tools)           │   │
+    │  └────────────┘  └──────────────────────┘   │
+    │                                              │
+    │  ┌──────────────────────────────────────┐   │
+    │  │  Real-time WebSocket (7 tools)       │   │
+    │  └──────────────────────────────────────┘   │
+    └──────────────┬───────────────────────────────┘
+                   │
+                   ▼
+    ┌──────────────────────────────────────────────┐
+    │         Polymarket Infrastructure            │
+    ├──────────────────────────────────────────────┤
+    │  • CLOB API (Order placement & management)   │
+    │  • Gamma API (Market data & analytics)       │
+    │  • WebSocket (Real-time price feeds)         │
+    │  • Polygon Chain (Settlement & execution)    │
+    └──────────────────────────────────────────────┘
+```
 
 ---
 

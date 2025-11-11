@@ -17,18 +17,41 @@ dependencies = [
     "httpx>=0.27.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "jinja2>=3.1.0",
 ]
 
 [project.optional-dependencies]
 dev = [
+    # Testing framework
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.5.0",
+    "pytest-timeout>=2.2.0",
+    "pytest-benchmark>=4.0.0",
+
+    # Code quality
     "black>=24.0.0",
     "ruff>=0.3.0",
+    "mypy>=1.8.0",
+    "isort>=5.13.0",
+
+    # Security
+    "bandit>=1.7.0",
+    "safety>=3.0.0",
+
+    # Additional utilities
+    "httpx>=0.27.0",
+    "psutil>=5.9.0",
+    "websockets>=12.0",
 ]
 
 [project.scripts]
 polymarket-mcp = "polymarket_mcp.server:main"
+polymarket-web = "polymarket_mcp.web.app:start"
+polymarket-setup = "setup_wizard:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/polymarket_mcp"]
@@ -44,3 +67,58 @@ target-version = "py310"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "integration: Integration tests with real API",
+    "slow: Slow tests (>5 seconds)",
+    "real_api: Tests requiring real API access",
+    "performance: Performance benchmarks",
+]
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "--maxfail=10",
+]
+timeout = 120
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["src/polymarket_mcp"]
+omit = [
+    "*/tests/*",
+    "*/venv/*",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+]
+branch = true
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "def __str__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true

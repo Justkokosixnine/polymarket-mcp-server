@@ -1,0 +1,80 @@
+Polymarket MCP Server - Docker Infrastructure Files
+===================================================
+
+Core Docker Files:
+------------------
+✓ Dockerfile                          - Multi-stage production build (150-200MB)
+✓ docker-compose.yml                  - Orchestration with volumes and health checks
+✓ .dockerignore                       - Build optimization (excludes venv, cache)
+✓ docker-start.sh                     - Automated startup script with validation
+✓ .env.example                        - Complete configuration template
+✓ test-docker.sh                      - Test suite for Docker setup
+✓ Makefile                            - Convenient commands (make help)
+
+Documentation:
+-------------
+✓ DOCKER.md                           - Complete Docker deployment guide
+✓ QUICKSTART_DOCKER.md                - 60-second quick start guide
+✓ DOCKER_SUMMARY.md                   - Technical summary and reference
+
+Kubernetes:
+----------
+✓ k8s/deployment.yaml                 - Production K8s deployment
+✓ k8s/service.yaml                    - K8s service definition
+✓ k8s/configmap.yaml                  - Non-sensitive configuration
+✓ k8s/secret.yaml.template            - Template for secrets
+✓ k8s/README.md                       - K8s deployment guide
+
+CI/CD:
+-----
+✓ .github/workflows/docker-publish.yml - Automated builds & publishing
+✓ .github/FUNDING.yml                  - GitHub Sponsors config
+
+Quick Commands:
+--------------
+./docker-start.sh                     - Start with automated checks
+docker compose up -d                  - Start services
+docker compose logs -f                - View logs
+docker compose down                   - Stop services
+make help                             - Show all make targets
+./test-docker.sh                      - Run test suite
+
+Features:
+--------
+✓ Multi-stage Docker build (optimized size)
+✓ Multi-architecture support (amd64 + arm64)
+✓ Non-root user (security)
+✓ Health checks (Docker + K8s)
+✓ Auto-restart on failure
+✓ Persistent volumes for logs/data
+✓ Resource limits (512MB RAM, 1 CPU)
+✓ Security scanning (Trivy)
+✓ SBOM generation
+✓ Automated CI/CD pipeline
+
+Image Details:
+-------------
+Base: python:3.12-slim
+Size: ~150-200MB (optimized)
+Platforms: linux/amd64, linux/arm64
+User: polymarket (UID 1000)
+Security: Non-root, minimal attack surface
+
+Quick Start (3 steps):
+---------------------
+1. cp .env.example .env
+2. Edit .env with your POLYGON credentials
+3. ./docker-start.sh
+
+That's it! Server is running.
+
+Documentation Tree:
+------------------
+README.md                    - Main documentation
+├── QUICKSTART_DOCKER.md    - 60s Docker quick start
+├── DOCKER.md               - Complete Docker guide
+├── DOCKER_SUMMARY.md       - Technical reference
+└── k8s/README.md           - Kubernetes guide
+
+Total Files Created: 17
+Total Documentation: 6 comprehensive guides

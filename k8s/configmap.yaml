@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: polymarket-mcp-config
+  namespace: default
+  labels:
+    app: polymarket-mcp
+data:
+  # Operating mode
+  DEMO_MODE: "false"
+
+  # Configuration
+  LOG_LEVEL: "INFO"
+  POLYMARKET_CHAIN_ID: "137"
+
+  # Safety limits
+  MAX_ORDER_SIZE_USD: "1000"
+  MAX_TOTAL_EXPOSURE_USD: "10000"
+  REQUIRE_CONFIRMATION_ABOVE_USD: "100"
+  MAX_POSITION_SIZE_PER_MARKET: "0.3"
+  MIN_LIQUIDITY_REQUIRED: "10000"
+  MAX_SPREAD_TOLERANCE: "0.05"
+
+  # Trading controls
+  ENABLE_AUTONOMOUS_TRADING: "false"
+  AUTO_CANCEL_ON_LARGE_SPREAD: "true"
+
+  # API endpoints (public configuration)
+  CLOB_API_URL: "https://clob.polymarket.com"
+  GAMMA_API_URL: "https://gamma-api.polymarket.com"
+
+  # Rate limiting
+  RATE_LIMIT_ENABLED: "true"

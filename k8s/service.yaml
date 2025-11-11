@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: polymarket-mcp
+  namespace: default
+  labels:
+    app: polymarket-mcp
+spec:
+  type: ClusterIP
+  selector:
+    app: polymarket-mcp
+  ports:
+  - name: stdio
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+
+  # Session affinity (optional)
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600

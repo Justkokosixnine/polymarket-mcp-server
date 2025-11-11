@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markets - Polymarket MCP Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>Polymarket MCP</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/">Dashboard</a></li>
+                <li><a href="/config">Configuration</a></li>
+                <li><a href="/markets" class="active">Markets</a></li>
+                <li><a href="/monitoring">Monitoring</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container main-content">
+        <h1>Market Discovery</h1>
+
+        <!-- Search Bar -->
+        <section class="section">
+            <div class="search-container">
+                <input type="text" id="search-input" class="search-input"
+                       placeholder="Search markets by keyword (e.g., election, sports, crypto)...">
+                <button class="btn btn-primary" onclick="searchMarkets()">Search</button>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="section">
+            <div class="filter-bar">
+                <button class="btn btn-secondary" onclick="loadTrendingMarkets()">Trending</button>
+                <button class="btn btn-secondary" onclick="filterByCategory('Politics')">Politics</button>
+                <button class="btn btn-secondary" onclick="filterByCategory('Sports')">Sports</button>
+                <button class="btn btn-secondary" onclick="filterByCategory('Crypto')">Crypto</button>
+                <button class="btn btn-secondary" onclick="loadClosingSoon()">Closing Soon</button>
+            </div>
+        </section>
+
+        <!-- Markets Table -->
+        <section class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 id="markets-title">Markets</h3>
+                    <div class="card-actions">
+                        <button class="btn btn-sm" onclick="refreshMarkets()">Refresh</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="markets-container" class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading markets...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Market Details Modal -->
+        <div id="market-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modal-title">Market Details</h2>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body" id="modal-body">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading details...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Polymarket MCP Dashboard</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        let currentMarkets = [];
+        let autoRefreshInterval = null;
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTrendingMarkets();
+            startAutoRefresh();
+        });
+
+        // Search enter key handler
+        document.getElementById('search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchMarkets();
+            }
+        });
+
+        async function searchMarkets() {
+            const query = document.getElementById('search-input').value.trim();
+            if (!query) {
+                showNotification('Please enter a search query', 'warning');
+                return;
+            }
+
+            const container = document.getElementById('markets-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Searching...</p></div>';
+
+            document.getElementById('markets-title').textContent = `Search Results: "${query}"`;
+
+            try {
+                const response = await fetch(`/api/markets/search?q=${encodeURIComponent(query)}&limit=20`);
+                const data = await response.json();
+
+                if (data.markets && data.markets.length > 0) {
+                    displayMarkets(data.markets);
+                } else {
+                    container.innerHTML = '<p class="text-muted">No markets found</p>';
+                }
+            } catch (error) {
+                container.innerHTML = `<p class="text-error">Search failed: ${error.message}</p>`;
+            }
+        }
+
+        async function loadTrendingMarkets() {
+            const container = document.getElementById('markets-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading trending markets...</p></div>';
+
+            document.getElementById('markets-title').textContent = 'Trending Markets';
+
+            try {
+                const response = await fetch('/api/markets/trending?limit=20');
+                const data = await response.json();
+
+                if (data.markets && data.markets.length > 0) {
+                    displayMarkets(data.markets);
+                } else {
+                    container.innerHTML = '<p class="text-muted">No trending markets available</p>';
+                }
+            } catch (error) {
+                container.innerHTML = `<p class="text-error">Failed to load: ${error.message}</p>`;
+            }
+        }
+
+        async function filterByCategory(category) {
+            const container = document.getElementById('markets-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading markets...</p></div>';
+
+            document.getElementById('markets-title').textContent = `${category} Markets`;
+
+            showNotification(`Loading ${category} markets...`, 'info');
+            // Note: This would use the filter_markets_by_category tool
+            // For now, we'll search by category name
+            await searchMarkets();
+            document.getElementById('search-input').value = category;
+        }
+
+        async function loadClosingSoon() {
+            showNotification('Loading markets closing soon...', 'info');
+            document.getElementById('markets-title').textContent = 'Closing Soon';
+            // Implementation would call get_closing_soon_markets
+        }
+
+        function displayMarkets(markets) {
+            currentMarkets = markets;
+            const container = document.getElementById('markets-container');
+
+            const html = `
+                <div class="table-responsive">
+                    <table class="markets-table">
+                        <thead>
+                            <tr>
+                                <th>Question</th>
+                                <th>Price (YES/NO)</th>
+                                <th>Volume 24h</th>
+                                <th>Liquidity</th>
+                                <th>Spread</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${markets.map((market, index) => `
+                                <tr>
+                                    <td class="market-question">${market.question || 'Unknown'}</td>
+                                    <td>
+                                        <span class="price-yes">${formatPrice(market.price_yes)}</span> /
+                                        <span class="price-no">${formatPrice(market.price_no)}</span>
+                                    </td>
+                                    <td class="text-right">${formatCurrency(market.volume_24h || 0)}</td>
+                                    <td class="text-right">${formatCurrency(market.liquidity || 0)}</td>
+                                    <td class="text-right">${formatPercent(market.spread || 0)}</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm" onclick="analyzeMarket('${market.condition_id || market.id}')">
+                                                Analyze
+                                            </button>
+                                            <button class="btn btn-sm btn-secondary" onclick="viewDetails('${market.condition_id || market.id}')">
+                                                Details
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        async function viewDetails(marketId) {
+            const modal = document.getElementById('market-modal');
+            const modalBody = document.getElementById('modal-body');
+
+            modal.style.display = 'flex';
+            modalBody.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading details...</p></div>';
+
+            try {
+                const response = await fetch(`/api/markets/${marketId}`);
+                const market = await response.json();
+
+                modalBody.innerHTML = `
+                    <div class="market-details">
+                        <h3>${market.question || 'Unknown Market'}</h3>
+
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <strong>Market ID:</strong>
+                                <span class="mono">${market.condition_id || market.id}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Volume (24h):</strong>
+                                <span>${formatCurrency(market.volume_24h || 0)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Liquidity:</strong>
+                                <span>${formatCurrency(market.liquidity || 0)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>YES Price:</strong>
+                                <span class="price-yes">${formatPrice(market.price_yes)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>NO Price:</strong>
+                                <span class="price-no">${formatPrice(market.price_no)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Spread:</strong>
+                                <span>${formatPercent(market.spread || 0)}</span>
+                            </div>
+                        </div>
+
+                        ${market.description ? `
+                            <div class="market-description">
+                                <strong>Description:</strong>
+                                <p>${market.description}</p>
+                            </div>
+                        ` : ''}
+
+                        <div class="button-group">
+                            <button class="btn btn-primary" onclick="analyzeMarket('${market.condition_id || market.id}')">
+                                Analyze Market
+                            </button>
+                            <button class="btn btn-secondary" onclick="closeModal()">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                modalBody.innerHTML = `<p class="text-error">Failed to load details: ${error.message}</p>`;
+            }
+        }
+
+        async function analyzeMarket(marketId) {
+            showNotification('Analyzing market...', 'info');
+
+            try {
+                const response = await fetch(`/api/markets/${marketId}/analyze`);
+                const analysis = await response.json();
+
+                showNotification('Analysis complete!', 'success');
+
+                // Display analysis in modal
+                const modalBody = document.getElementById('modal-body');
+                modalBody.innerHTML = `
+                    <div class="market-analysis">
+                        <h3>Market Analysis</h3>
+
+                        <div class="analysis-section">
+                            <h4>Recommendation</h4>
+                            <p class="analysis-recommendation ${analysis.recommendation?.toLowerCase()}">${analysis.recommendation || 'N/A'}</p>
+                        </div>
+
+                        <div class="analysis-section">
+                            <h4>Risk Assessment</h4>
+                            <p>${analysis.risk_assessment || 'N/A'}</p>
+                        </div>
+
+                        <div class="analysis-section">
+                            <h4>Confidence Score</h4>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: ${(analysis.confidence_score || 0) * 100}%"></div>
+                                <span>${((analysis.confidence_score || 0) * 100).toFixed(0)}%</span>
+                            </div>
+                        </div>
+
+                        ${analysis.key_factors ? `
+                            <div class="analysis-section">
+                                <h4>Key Factors</h4>
+                                <ul>
+                                    ${analysis.key_factors.map(factor => `<li>${factor}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                    </div>
+                `;
+
+                document.getElementById('market-modal').style.display = 'flex';
+            } catch (error) {
+                showNotification('Analysis failed: ' + error.message, 'error');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('market-modal').style.display = 'none';
+        }
+
+        function refreshMarkets() {
+            loadTrendingMarkets();
+            showNotification('Markets refreshed', 'success');
+        }
+
+        function startAutoRefresh() {
+            // Auto-refresh every 30 seconds
+            autoRefreshInterval = setInterval(() => {
+                if (currentMarkets.length > 0) {
+                    refreshMarkets();
+                }
+            }, 30000);
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+
+        // Close modal on outside click
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('market-modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
