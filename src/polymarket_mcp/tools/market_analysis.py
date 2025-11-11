@@ -823,7 +823,6 @@ async def handle_tool(name: str, arguments: Dict[str, Any]) -> List[types.TextCo
         else:
             raise ValueError(f"Unknown tool: {name}")
 
-        import json
         return [types.TextContent(
             type="text",
             text=json.dumps(result, indent=2)
@@ -831,7 +830,6 @@ async def handle_tool(name: str, arguments: Dict[str, Any]) -> List[types.TextCo
 
     except Exception as e:
         logger.error(f"Tool execution failed for {name}: {e}")
-        import json
         return [types.TextContent(
             type="text",
             text=json.dumps({"error": str(e)}, indent=2)

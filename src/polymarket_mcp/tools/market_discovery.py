@@ -597,7 +597,6 @@ async def handle_tool(name: str, arguments: Dict[str, Any]) -> List[types.TextCo
         else:
             raise ValueError(f"Unknown tool: {name}")
 
-        import json
         return [types.TextContent(
             type="text",
             text=json.dumps(result, indent=2)
