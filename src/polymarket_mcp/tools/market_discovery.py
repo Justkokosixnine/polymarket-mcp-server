@@ -46,44 +46,43 @@ async def _fetch_gamma_markets(
 
     await rate_limiter.acquire(EndpointCategory.GAMMA_API)
 
-
     try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                url = f"{GAMMA_API_URL}{endpoint}"
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            url = f"{GAMMA_API_URL}{endpoint}"
 
-                # Set default params
-                if params is None:
-                    params = {}
+            # Set default params
+            if params is None:
+                params = {}
 
-                # Add limit if specified
-                if limit:
-                    params["limit"] = limit
+            # Add limit if specified
+            if limit:
+                params["limit"] = limit
 
-                logger.debug(f"Fetching from {url} with params: {params}")
+            logger.debug(f"Fetching from {url} with params: {params}")
 
-                response = await client.get(url, params=params)
-                response.raise_for_status()
+            response = await client.get(url, params=params)
+            response.raise_for_status()
 
-                data = response.json()
+            data = response.json()
 
-                # Handle different response formats
-                if isinstance(data, list):
-                    return data[:limit] if limit else data
-                elif isinstance(data, dict):
-                    # Some endpoints return {data: [...], next_cursor: ...}
-                    if "data" in data:
-                        return data["data"][:limit] if limit else data["data"]
-                    # Others return the market directly
-                    return [data]
+            # Handle different response formats
+            if isinstance(data, list):
+                return data[:limit] if limit else data
+            elif isinstance(data, dict):
+                # Some endpoints return {data: [...], next_cursor: ...}
+                if "data" in data:
+                    return data["data"][:limit] if limit else data["data"]
+                # Others return the market directly
+                return [data]
 
-                return []
+            return []
 
-        except httpx.HTTPError as e:
-            logger.error(f"HTTP error fetching markets: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Error fetching markets: {e}")
-            raise
+    except httpx.HTTPError as e:
+        logger.error(f"HTTP error fetching markets: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching markets: {e}")
+        raise
 
 
 async def search_markets(

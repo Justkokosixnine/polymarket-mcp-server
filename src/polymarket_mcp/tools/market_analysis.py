@@ -88,16 +88,15 @@ async def _fetch_gamma_api(endpoint: str, params: Optional[Dict] = None) -> Any:
 
     await rate_limiter.acquire(EndpointCategory.GAMMA_API)
 
-
     try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                url = f"{GAMMA_API_URL}{endpoint}"
-                response = await client.get(url, params=params or {})
-                response.raise_for_status()
-                return response.json()
-        except Exception as e:
-            logger.error(f"Gamma API error for {endpoint}: {e}")
-            raise
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            url = f"{GAMMA_API_URL}{endpoint}"
+            response = await client.get(url, params=params or {})
+            response.raise_for_status()
+            return response.json()
+    except Exception as e:
+        logger.error(f"Gamma API error for {endpoint}: {e}")
+        raise
 
 
 async def _fetch_clob_api(endpoint: str, params: Optional[Dict] = None) -> Any:
@@ -106,16 +105,15 @@ async def _fetch_clob_api(endpoint: str, params: Optional[Dict] = None) -> Any:
 
     await rate_limiter.acquire(EndpointCategory.MARKET_DATA)
 
-
     try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                url = f"{CLOB_API_URL}{endpoint}"
-                response = await client.get(url, params=params or {})
-                response.raise_for_status()
-                return response.json()
-        except Exception as e:
-            logger.error(f"CLOB API error for {endpoint}: {e}")
-            raise
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            url = f"{CLOB_API_URL}{endpoint}"
+            response = await client.get(url, params=params or {})
+            response.raise_for_status()
+            return response.json()
+    except Exception as e:
+        logger.error(f"CLOB API error for {endpoint}: {e}")
+        raise
 
 
 async def get_market_details(
